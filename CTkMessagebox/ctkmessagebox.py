@@ -26,10 +26,6 @@ class CTkMessagebox(customtkinter.CTkToplevel):
                  height: int = 200,
                  title: str = "CTkMessagebox",
                  message: str = "This is a CTkMessagebox!",
-                 option_1: str = "OK",
-                 option_2: str = None,
-                 option_3: str = None,
-                 options: list = [],
                  border_width: int = 1,
                  border_color: str = "default",
                  button_color: str = "default",
@@ -52,9 +48,12 @@ class CTkMessagebox(customtkinter.CTkToplevel):
                  topmost: bool = True,
                  fade_in_duration: int = 0,
                  sound: bool = False,
-                 option_focus: Literal[1, 2, 3] = None):
+                 option_focus: Literal[1, 2, 3] = None,
+                 **options):
         
         super().__init__()
+
+        self.buttons = [] #TODO: move this to init
         
         
         self.master_window = master
@@ -122,14 +121,7 @@ class CTkMessagebox(customtkinter.CTkToplevel):
         
         if self.button_height>self.height/4: self.button_height = self.height/4 -20
         self.dot_color = cancel_button_color
-        self.border_width = border_width if border_width<6 else 5
-        
-        if type(options) is list and len(options)>0:
-            try:
-                option_1 = options[-1]
-                option_2 = options[-2]
-                option_3 = options[-3]
-            except IndexError: None
+        self.border_width = border_width if border_width <6 else 5
             
         if bg_color=="default":
             self.bg_color = self._apply_appearance_mode(customtkinter.ThemeManager.theme["CTkFrame"]["fg_color"])
@@ -236,82 +228,50 @@ class CTkMessagebox(customtkinter.CTkToplevel):
             height_offset = int((self.info._text_label.winfo_reqheight())-(self.height/2) + self.height)
             self.geometry(f"{self.width}x{height_offset}")
 
-
-        self.option_text_1 = option_1
-        
-        self.button_1 = customtkinter.CTkButton(self.frame_top, text=self.option_text_1, fg_color=self.button_color[0],
-                                                width=self.button_width, font=self.font, text_color=self.bt_text_color,
-                                                hover_color=self.bt_hv_color, height=self.button_height,
-                                                command=lambda: self.button_event(self.option_text_1))
-        
-
-        self.option_text_2 = option_2 
-        if option_2:     
-            self.button_2 = customtkinter.CTkButton(self.frame_top, text=self.option_text_2, fg_color=self.button_color[1],
-                                                    width=self.button_width, font=self.font, text_color=self.bt_text_color,
-                                                    hover_color=self.bt_hv_color, height=self.button_height,
-                                                    command=lambda: self.button_event(self.option_text_2))
-
-        self.option_text_3 = option_3
-        if option_3:
-            self.button_3 = customtkinter.CTkButton(self.frame_top, text=self.option_text_3, fg_color=self.button_color[2],
-                                                    width=self.button_width, font=self.font, text_color=self.bt_text_color,
-                                                    hover_color=self.bt_hv_color, height=self.button_height,
-                                                    command=lambda: self.button_event(self.option_text_3))
+        for option in options:
+            button = customtkinter.CTkButton(
+                self.frame_top, 
+                text=option,
+                fg_color=self.button_color[0],
+                width=self.button_width, 
+                font=self.font, 
+                text_color=self.bt_text_color,
+                hover_color=self.bt_hv_color, 
+                height=self.button_height,
+                command=lambda: self.button_event(option)
+            )
+            self.buttons.append(button)
             
+        self.frame_top.columnconfigure((0,1,2,3,4,5), weight=1)
+
         if self.justify=="center":
             if button_width:
-                columns = [4,3,2]
+                columns = list(range(1, len(options) + 1))
                 span = 1
             else:
-                columns = [4,2,0]
+                columns = [0] + list(range(2, len(columns) + 1))
                 span = 2
-            if option_3:
-                self.frame_top.columnconfigure((0,1,2,3,4,5), weight=1)
-                self.button_1.grid(row=2, column=columns[0], columnspan=span, sticky="news", padx=(0,10), pady=10) 
-                self.button_2.grid(row=2, column=columns[1], columnspan=span, sticky="news", padx=10, pady=10)
-                self.button_3.grid(row=2, column=columns[2], columnspan=span, sticky="news", padx=(10,0), pady=10)
-            elif option_2:
-                self.frame_top.columnconfigure((0,5), weight=1)
-                columns = [2,3]
-                self.button_1.grid(row=2, column=columns[0], sticky="news", padx=(0,5), pady=10)
-                self.button_2.grid(row=2, column=columns[1], sticky="news", padx=(5,0), pady=10)
-            else:
-                if button_width:
-                    self.frame_top.columnconfigure((0,1,2,3,4,5), weight=1)
-                else:
-                    self.frame_top.columnconfigure((0,2,4), weight=2)
-                self.button_1.grid(row=2, column=columns[1], columnspan=span, sticky="news", padx=(0,10), pady=10)   
+
         elif self.justify=="left":
-            self.frame_top.columnconfigure((0,1,2,3,4,5), weight=1)
+            
             if button_width:
-                columns = [0,1,2]
+                columns = list(range(1, len(options) + 1))
                 span = 1
             else:        
-                columns = [0,2,4]
-                span = 2
-            if option_3:
-                self.button_1.grid(row=2, column=columns[2], columnspan=span, sticky="news", padx=(0,10), pady=10)
-                self.button_2.grid(row=2, column=columns[1], columnspan=span, sticky="news", padx=10, pady=10)
-                self.button_3.grid(row=2, column=columns[0], columnspan=span, sticky="news", padx=(10,0), pady=10)
-            elif option_2:
-                self.button_1.grid(row=2, column=columns[1], columnspan=span, sticky="news", padx=10, pady=10)
-                self.button_2.grid(row=2, column=columns[0], columnspan=span, sticky="news", padx=(10,0), pady=10)
-            else:
-                self.button_1.grid(row=2, column=columns[0], columnspan=span, sticky="news", padx=(10,0), pady=10)
+                columns = [0,2] + list(range(4, len(options) + 1))
+                span = 2  
+        
         else:
-            self.frame_top.columnconfigure((0,1,2,3,4,5), weight=1)
             if button_width:
-                columns = [5,4,3]
+                columns = list(range(3, len(options) + 1))
                 span = 1
             else:
-                columns = [4,2,0]
+                columns = [0,2] + list(range(4, len(options) + 1))
                 span = 2
-            self.button_1.grid(row=2, column=columns[0], columnspan=span, sticky="news", padx=(0,10), pady=10)
-            if option_2:  
-                self.button_2.grid(row=2, column=columns[1], columnspan=span, sticky="news", padx=10, pady=10)
-            if option_3:
-                self.button_3.grid(row=2, column=columns[2], columnspan=span, sticky="news", padx=(10,0), pady=10)
+            
+        for i, button in enumerate(self.buttons):
+            if i < len(columns):
+                button.grid(row=2, column=columns[i], columnspan=span, sticky="news", padx=(0,10), pady=10)
                         
         if header:
             self.title_label.configure(text="")
@@ -430,18 +390,14 @@ class CTkMessagebox(customtkinter.CTkToplevel):
         self.geometry(f'+{self.x}+{self.y}')
         
     def button_event(self, event=None):
-        try:
-            self.button_1.configure(state="disabled")
-            self.button_2.configure(state="disabled")
-            self.button_3.configure(state="disabled")
-        except AttributeError:
-            pass
+        for button in self.buttons:
+            button.configure(state="disabled")
 
         if self.fade:
             self.fade_out()
         self.grab_release()
         self.destroy()
-        self.event = event  
+        self.event = event
         
 if __name__ == "__main__":
     app = CTkMessagebox()
